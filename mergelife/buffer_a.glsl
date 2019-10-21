@@ -1,0 +1,100 @@
+struct Rule {
+   int[8] v;
+};
+
+const int rule_frames = 300;
+const bool random_rules = true;
+
+const int[] rules = int[](
+    // some interesting rules from https://www.heatonresearch.com/mergelife/ml-gallery.html
+    // one rule per line
+    0xcb97,0x6a74,0x88c0,0x28aa,0x1b6a,0x834b,0x4fe8,0x60ac, 
+    0xe542,0x5f79,0x9341,0xf31e,0x6c6b,0x7f08,0x8773,0x7068,
+	0xa07f,0xc000,0x0000,0x0000,0x0000,0x0000,0xff80,0x807f,
+	0x6eb6,0xba3d,0x70b4,0xac6f,0xbaae,0x2604,0x8529,0x8998,
+	0xea44,0x55df,0x9025,0xbead,0x5f6e,0x45ca,0x6168,0x275a,
+	0x1c48,0x9004,0x8831,0x41be,0x2804,0x8f50,0x9901,0xdb18,
+	0x6007,0x7d42,0x05e5,0x1b9b,0x2899,0xe043,0x1cd4,0x2f7b,
+	0x2085,0xc66a,0x84d8,0xfbE8,0xb3c0,0x70e4,0x0e2e,0x799c,
+	0x6da1,0x0852,0x5e0f,0x2Ad9,0xc902,0xf8a0,0x78fd,0x4473,
+	0xbf51,0x3628,0x3bcf,0x1ee1,0x5b18,0x7b95,0x7898,0x6a9a,
+    0x2152,0x9b71,0xabb7,0x162a,0x45ff,0xdd03,0xfe15,0x957e,
+	0xef12,0xd680,0x9430,0x8853,0xa368,0x55f9,0x7451,0x7c44,
+	0xf81b,0x38d1,0x7f60,0x62ad,0x850b,0x2085,0xddff,0x8154,
+	0x8503,0x5eb6,0x084c,0x04df,0x7657,0xa5b3,0x6044,0x3524,
+	0x4d56,0xd1e3,0x4acb,0x60d6,0x5e2f,0x5fbf,0x33ad,0xe266,
+    0x6639,0xE9FE,0x797D,0xEC06,0x6949,0x6AF5,0x4E05,0x7556,
+	0x9d78,0x97dC,0x8F8F,0x1dab,0x96aa,0xcc5d,0xc54a,0x516d,
+	0x35F5,0xE05F,0xF4C8,0x9C8F,0x6B43,0x5528,0x87DD,0x22FC,
+	0x6769,0xBdD6,0x7d03,0x564e,0xa5ec,0xcae2,0x54c4,0x8F0c
+);
+
+
+float randv(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+Rule randRule() {
+    Rule r;
+    for (int i=0; i<8; i++) {
+    	r.v[i] = int(float(0x100) * randv(vec2(iTime, i*5))) * 256 +
+                 int(float(0x100) * randv(vec2(iTime, i*7)));
+    }
+    return r;
+}
+
+int[8] sortRule(int[8] base_rule)
+{
+    int a[8];
+    for (int i=0; i<8; i++) {
+        a[i] = (base_rule[i] << 8) + i;
+    }
+    for (int i=0; i<8; i++) {
+        for (int j=0; j<7; j++) {
+            if (a[j] > a[j+1]) {
+                int t = a[j];
+                a[j] = a[j+1];
+                a[j+1] = t;
+            }
+        }
+    }
+    return a;
+}
+
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    if (iFrame % rule_frames == 0){  
+        
+        if (int(fragCoord.x) < 9 && int(fragCoord.y) == 0) {
+            int[8] rule = int[8](0xcb97, 0x6a74, 0x88c0, 0x28aa, 0x1b6a, 0x834b, 0x4fe8, 0x60ac);
+            int rule_index = (iFrame / rule_frames);
+            int rule_count = rules.length() / 8;
+            if (random_rules && rule_index >= rule_count) {
+                rule = randRule().v;
+            } else {
+                rule_index = rule_index % rule_count;
+                for (int j=0; j<8; j++) {
+                    rule[j] = rules[rule_index * 8 + j];
+                }
+            }
+            int a[8] = sortRule(rule);
+            int i = int(fragCoord.x);
+            if (i < 8) {
+                int v= a[i];
+            	fragColor = vec4(float((v >> 16) & 0xff)/255.0, float((v >> 8) & 0xff)/256.0, float((v >> 0) & 0xff)/256.00, 0 );
+            } else {
+                fragColor = vec4(1);
+            }
+        } else {
+            fragColor = vec4(0);
+        }
+    } else {
+        ivec2 p = ivec2(fragCoord);
+        if (p.x < 8) {
+            fragColor = texelFetch( iChannel0, ivec2(fragCoord), 0 );
+        } else {
+            fragColor = vec4(0);
+        }
+    }
+}
