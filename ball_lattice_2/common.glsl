@@ -1,0 +1,11 @@
+const float SIZE = 03.0;
+const float BALL_SIZE = 0.90 * SIZE; // should be between sqrt(2)/2 and 1
+const float BALL_D = 2.0 * BALL_SIZE; 
+const int H = 300; // Reduce this if you want to play with surface or reduce pressure at the bottom
+const float VEL_LIMIT = 0.2 * BALL_SIZE;
+const vec2 G = vec2(0.0, -0.003);
+const float E_FORCE = 1.9;
+const float M = 0.6 * BALL_SIZE;
+const float DAMP_K = 0.98;
+const float SQ_K = 0.0;
+const float MOUSE_F = 0.18;
