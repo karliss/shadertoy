@@ -11,7 +11,7 @@ float line(vec2 a, vec2 b, vec2 p) {
 	vec2 ba = b - a;
 	float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0);
     vec2 v =  pa - ba*h ;
-    return dot(v, v);
+    return length(v);
 }
 
 vec2 addAngle(vec2 a, vec2 b)
@@ -38,6 +38,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     float overlaps = 0.0;
     vec4 normSum = vec4(0.0);
     vec4 res = vec4(0);
+    float cnt = 1.;
     
     //vec4 pos = vec4(0);
     for (int x=-2; x<=2; x++) {
@@ -59,15 +60,19 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
                     
                     vec2 ab = p - p2;
                     float abl = dot(ab, ab);;
-                    float ds = line(p, p2, fcord);
-                    if (abl < BALL_D * BALL_D * 1.1 && ds < 0.3  ) {
+                    float ds = (line(p, p2, fcord));
+                    if (abl < BALL_D * BALL_D * 1.1 && ds < 0.3+scale  ) {
+                        //ds = sqrt(ds);
                     	//float a = atan(ab.y, ab.x)+0.0;
                         //a *= 6.0; // multiply angle by six so that everying in hexagonal lattice have the same color
                         //vec4 color = max(vec4(sin(a), cos(a), -sin(a)-cos(a), 1.0), 0.0);
                         //vec2 t6=times6(normalize(ab));
                         vec2 t6 = times6(ab/(BALL_D)); // length(ab) ~ BALL_D
                         vec4 color = max(vec4(t6.y, t6.x, -t6.x-t6.y, 1.0), 0.0);
-                        res += color;
+                        
+                        //res = mix(res, color * (1.-smoothstep(0.3, 0.3+scale, ds)), 1./cnt);
+                        //cnt += (1.-smoothstep(0.3, 0.3+scale, ds));
+                        res = max(res, color * (1.-smoothstep(0.3, 0.3+scale, ds))); // Thanks FabriceNeyret2                 
                     }
                 }
               }
